@@ -1,0 +1,27 @@
+{
+  "name": "moyu-archive",
+  "version": "1.0.0",
+  "description": "小雯上班摸鱼档案馆 - 网络乐子人专属",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "moyu",
+    "feishu",
+    "archive"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "axios": "^1.18.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "form-data": "^4.0.6",
+    "multer": "^2.2.0"
+  }
+}

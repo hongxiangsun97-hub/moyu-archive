@@ -1,0 +1,20 @@
+# Render 部署配置文件
+# 文档: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: moyu-archive
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.2
+      - key: FEISHU_APP_ID
+        sync: false
+      - key: FEISHU_APP_SECRET
+        sync: false
+      - key: FEISHU_SHEET_TOKEN
+        value: W4FCsff3Khj0cCtAAhyc1ynxnLb

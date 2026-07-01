@@ -1,0 +1,42 @@
+# 依赖
+node_modules/
+website/node_modules/
+
+# 敏感信息
+.env
+.env.local
+.env.*.local
+
+# 运行时生成的数据
+data/new-records.json
+data/images/
+website/uploads/
+
+# 系统/IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+
+# 测试截图
+website/screenshot-*.png
+website/test-*.png
+website/*.png
+
+# Playwright
+.playwright-cli/
+
+# 临时文件
+_push_payload.json
+scripts/push_to_github.js
+
+# WorkBuddy 工作区元数据
+.workbuddy/
+
+# 诊断/测试脚本
+website/diagnose.js
+website/take_shots.js
+website/test_features.js
+website/install-deps.js
+website/package-lock.json
