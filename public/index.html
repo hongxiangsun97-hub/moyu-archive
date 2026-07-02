@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🐟 小雯上班摸鱼档案馆 | 今日不摸鱼，明日没鱼摸</title>
+  <meta name="description" content="小雯上班摸鱼记录档案馆 - 网络乐子人专属摸鱼图鉴">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&family=Smiley+Sans:wght@100..900&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-theme="light">
+
+  <!-- 跑马灯横幅 -->
+  <div class="marquee-banner" id="marqueeBanner">
+    <div class="marquee-content" id="marqueeContent"></div>
+  </div>
+
+  <!-- 游动的鱼 -->
+  <div class="fish-container" id="fishContainer" aria-hidden="true"></div>
+
+  <!-- 顶部导航 -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand" title="返回首页">
+        <span class="brand-emoji">🐟</span>
+        <span class="brand-text">摸鱼档案馆</span>
+      </div>
+      <nav class="topnav">
+        <a href="#stats" class="nav-link">📊 摸鱼报告</a>
+        <a href="#archive" class="nav-link">🗂️ 摸鱼档案</a>
+        <a href="#add" class="nav-link nav-cta" id="navAddBtn">✍️ 新增摸鱼</a>
+      </nav>
+      <div class="theme-toggle" id="themeToggle" title="切换主题">
+        <span class="theme-icon-light">☀️</span>
+        <span class="theme-icon-dark">🌙</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero 区 -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-tag">📜 第 9 8 7 6 5 4 3 2 1 卷 · 网络乐子人必修</div>
+      <h1 class="hero-title">
+        <span class="title-line">小雯上班</span>
+        <span class="title-line title-line-2">摸鱼档案馆</span>
+      </h1>
+      <p class="hero-subtitle">所谓上班，不过是在工位上研究人类行为学、社会学、玄学与厨艺的综合场所</p>
+      <div class="hero-quote" id="heroQuote">
+        <span class="quote-mark">「</span>
+        <span class="quote-text">加载今日摸鱼箴言中...</span>
+        <span class="quote-mark">」</span>
+      </div>
+      <div class="hero-actions">
+        <a href="#archive" class="btn btn-primary btn-jelly">👇 开始浏览摸鱼记录</a>
+        <a href="#add" class="btn btn-secondary btn-jelly">✍️ 我也要记录摸鱼</a>
+      </div>
+    </div>
+    <div class="scroll-hint">向下滚动查看摸鱼 ↓↓↓</div>
+  </section>
+
+  <!-- 统计区 -->
+  <section class="stats-section" id="stats">
+    <div class="section-header">
+      <span class="section-tag">// 摸鱼数据透视</span>
+      <h2 class="section-title">📊 摸鱼大数据报告</h2>
+      <p class="section-desc">用数据说话，每一秒摸鱼都值得被铭记</p>
+    </div>
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card stat-card-1"><div class="stat-emoji">📅</div><div class="stat-num" id="statDays">-</div><div class="stat-label">摸鱼天数</div></div>
+      <div class="stat-card stat-card-2"><div class="stat-emoji">🗂️</div><div class="stat-num" id="statRecords">-</div><div class="stat-label">摸鱼记录</div></div>
+      <div class="stat-card stat-card-3"><div class="stat-emoji">🖼️</div><div class="stat-num" id="statImages">-</div><div class="stat-label">摸鱼截图</div></div>
+      <div class="stat-card stat-card-4"><div class="stat-emoji">🏆</div><div class="stat-num" id="statBusiest">-</div><div class="stat-label">最忙摸鱼日</div></div>
+    </div>
+    <div class="top-contents" id="topContents">
+      <h3 class="top-contents-title">🔥 摸鱼项目 Top 榜</h3>
+      <div class="top-contents-list" id="topContentsList"></div>
+    </div>
+  </section>
+
+  <!-- 档案浏览区 -->
+  <section class="archive-section" id="archive">
+    <div class="section-header">
+      <span class="section-tag">// 摸鱼档案全集</span>
+      <h2 class="section-title">🗂️ 摸鱼档案浏览</h2>
+      <p class="section-desc">点击日期切换，每条记录都有对应的截图，一一对应，绝不糊弄</p>
+    </div>
+
+    <!-- 搜索 + 日期选择 -->
+    <div class="archive-controls">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="搜索摸鱼内容/日期，比如：偷菜、刷剧、5.12..." />
+      </div>
+      <div class="view-toggle">
+        <button class="view-btn active" data-view="card">🎴 卡片</button>
+        <button class="view-btn" data-view="timeline">🕐 时间线</button>
+        <button class="view-btn" data-view="table">📋 表格</button>
+      </div>
+    </div>
+
+    <!-- 日期选择器 -->
+    <div class="date-tabs" id="dateTabs">
+      <div class="date-tabs-scroll" id="dateTabsScroll"></div>
+    </div>
+
+    <!-- 记录展示区 -->
+    <div class="records-container" id="recordsContainer">
+      <div class="loading">
+        <div class="loading-fish">🐟</div>
+        <p>正在加载摸鱼记录...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 新增记录区 -->
+  <section class="add-section" id="add">
+    <div class="section-header">
+      <span class="section-tag">// 我也要摸鱼</span>
+      <h2 class="section-title">✍️ 新增一条摸鱼记录</h2>
+      <p class="section-desc">摸鱼不记录，等于没摸。在这里直接添加你的摸鱼实况</p>
+    </div>
+    <div class="add-card">
+      <form id="addForm" class="add-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sheetTitle">📅 摸鱼日期</label>
+            <input type="text" id="sheetTitle" placeholder="如：小雯上班记录（7.1）" required />
+            <small class="form-hint">💡 也可选择已有日期继续追加</small>
+          </div>
+          <div class="form-group">
+            <label for="time">⏰ 摸鱼时间</label>
+            <input type="time" id="time" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="content">📝 摸鱼内容</label>
+          <textarea id="content" rows="3" placeholder="如：偷菜 / 刷剧 / 微博吃瓜 / 玩无敌嚒嚒鸡..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="image">🖼️ 摸鱼证据（截图）</label>
+          <div class="image-upload" id="imageUpload">
+            <input type="file" id="image" accept="image/*" hidden />
+            <div class="upload-placeholder" id="uploadPlaceholder">
+              <span class="upload-icon">📷</span>
+              <span class="upload-text">点击上传摸鱼截图</span>
+              <small>支持 PNG / JPG / GIF，最大 10MB</small>
+            </div>
+            <div class="upload-preview" id="uploadPreview" style="display:none;">
+              <img id="previewImg" alt="预览" />
+              <button type="button" class="remove-img" id="removeImgBtn">✕</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-jelly btn-submit">
+            🚀 提交摸鱼记录
+          </button>
+          <button type="reset" class="btn btn-secondary btn-jelly" id="resetBtn">🗑️ 清空</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- 弹幕层 -->
+  <div class="danmaku-layer" id="danmakuLayer" aria-hidden="true"></div>
+
+  <!-- 图片灯箱 -->
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lightbox-close" id="lightboxClose">✕</button>
+    <img class="lightbox-img" id="lightboxImg" alt="" />
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+  </div>
+
+  <!-- 浮动新增按钮 -->
+  <button class="fab" id="fab" title="新增摸鱼记录">✍️</button>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">🐟 小雯上班摸鱼档案馆</div>
+      <div class="footer-quote" id="footerQuote">摸鱼一时爽，一直摸鱼一直爽</div>
+      <div class="footer-meta">
+        <span>共 <strong id="footerRecords">0</strong> 条摸鱼记录</span>
+        <span class="dot">·</span>
+        <span>数据来源：飞书文档「没什么卵用的表格」</span>
+        <span class="dot">·</span>
+        <span>仅供娱乐，请勿当真（认真你就输了）</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast 通知 -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "moyu-archive",
+  "version": "1.0.0",
+  "description": "小雯上班摸鱼档案馆 - 网络乐子人专属",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step needed'"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "form-data": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
