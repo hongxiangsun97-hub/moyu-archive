@@ -143,14 +143,19 @@ function launchConfetti() {
 }
 
 // ============ 数据加载 ============
+// Cloudflare Pages 部署：直接 fetch 静态 /records.json（无需函数）
+// 本地开发：website/server.js 会把 /records.json 映射到 data/records.json
 async function loadRecords() {
   try {
-    const resp = await fetch('/api/records');
-    const json = await resp.json();
-    if (!json.ok) throw new Error(json.msg || '加载失败');
-    state.allData = json.data || [];
+    const resp = await fetch('/records.json');
+    if (!resp.ok) throw new Error('records.json 加载失败: ' + resp.status);
+    const data = await resp.json();
+    // records.json 是裸数组 [{sheetTitle, records, ...}]
+    state.allData = Array.isArray(data) ? data : (data.data || []);
     renderDateTabs();
     renderCurrentSheet();
+    // 数据加载完再算统计（本地计算，无需再请求）
+    renderStatsLocal();
   } catch (e) {
     $('#recordsContainer').innerHTML = `
       <div class="empty-state">
@@ -160,23 +165,45 @@ async function loadRecords() {
   }
 }
 
-async function loadStats() {
+// 统计数据：前端本地计算（数据已在 state.allData，无需请求后端）
+function renderStatsLocal() {
   try {
-    const resp = await fetch('/api/stats');
-    const json = await resp.json();
-    if (!json.ok) return;
-    const s = json.data;
-    $('#statDays').textContent = s.days;
-    $('#statRecords').textContent = s.totalRecords;
-    $('#statImages').textContent = s.totalImages;
-    // 最忙摸鱼日：从标题提取日期
-    const m = (s.busiestDay || '').match(/(\d{1,2})[.．](\d{1,2})/);
+    const sheets = state.allData;
+    if (!sheets.length) return;
+    let totalRecords = 0;
+    let totalImages = 0;
+    let busiestDay = null;
+    let busiestCount = 0;
+    const contentFreq = {};
+
+    for (const sheet of sheets) {
+      totalRecords += sheet.records.length;
+      if (sheet.records.length > busiestCount) {
+        busiestCount = sheet.records.length;
+        busiestDay = sheet.sheetTitle;
+      }
+      for (const r of sheet.records) {
+        if (r.image) totalImages++;
+        const c = (r.content || '').trim().split('\n')[0].slice(0, 20);
+        if (c) contentFreq[c] = (contentFreq[c] || 0) + 1;
+      }
+    }
+
+    const days = sheets.length;
+    $('#statDays').textContent = days;
+    $('#statRecords').textContent = totalRecords;
+    $('#statImages').textContent = totalImages;
+    const m = (busiestDay || '').match(/(\d{1,2})[.．](\d{1,2})/);
     $('#statBusiest').textContent = m ? `${m[1]}.${m[2]}` : '-';
 
-    // Top 榜
+    const topContents = Object.entries(contentFreq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([name, count]) => ({ name, count }));
+
     const list = $('#topContentsList');
-    if (s.topContents && s.topContents.length) {
-      list.innerHTML = s.topContents.map((c, i) => `
+    if (topContents.length) {
+      list.innerHTML = topContents.map((c, i) => `
         <div class="top-content-item">
           <span class="top-content-rank r${i + 1}">${i + 1}</span>
           <span>${escapeHtml(c.name)}</span>
@@ -186,21 +213,43 @@ async function loadStats() {
     } else {
       list.innerHTML = '<div style="color:var(--text-muted);">暂无数据</div>';
     }
-    $('#footerRecords').textContent = s.totalRecords;
+    $('#footerRecords').textContent = totalRecords;
   } catch (e) {
     console.error('stats error', e);
   }
 }
 
-async function loadQuote() {
-  try {
-    const resp = await fetch('/api/quotes');
-    const json = await resp.json();
-    if (json.ok) {
-      $('.quote-text').textContent = json.quote;
-      $('#footerQuote').textContent = json.quote;
-    }
-  } catch (e) {}
+// 摸鱼语录：前端本地随机（无需请求后端）
+const MOYU_QUOTES = [
+  '上班是不可能上班的，这辈子都不可能上班的',
+  '今天不摸鱼，明天没鱼摸',
+  '我不是在摸鱼，我是在进行深度思考',
+  '工作使我快乐？不，是下班使我快乐',
+  '摸鱼一时爽，一直摸鱼一直爽',
+  '老板看不见就是没在摸鱼',
+  '今日事今日毕？不，今日事明日再说',
+  '我有一个梦想：上班只拿钱不干活',
+  '工资可以少，摸鱼不能停',
+  '今日摸鱼，明日成龙',
+  '人在工位，心在远方',
+  '我摸的不是鱼，是自由',
+  '没有摸鱼的上班是不完整的',
+  '生活不止眼前的苟且，还有工位上的摸鱼',
+  '摸鱼是一门艺术，需要用心去感受',
+  '上班摸鱼，下班躺平，人生赢家',
+  '只要思想不滑坡，办法总比困难多——摸鱼的办法',
+  '今日不摸鱼，如衣锦夜行',
+  '摸鱼冠军，非我莫属',
+  '上班如上坟，摸鱼如沐春',
+  '一日摸鱼一日爽，天天摸鱼天天爽',
+  '人生苦短，及时摸鱼',
+  '我没摸鱼，我在帮老板省钱（电费）',
+];
+
+function loadQuote() {
+  const q = MOYU_QUOTES[Math.floor(Math.random() * MOYU_QUOTES.length)];
+  $('.quote-text').textContent = q;
+  $('#footerQuote').textContent = q;
 }
 
 // ============ 渲染：日期标签 ============
@@ -383,7 +432,7 @@ function renderCard(r, idx, sheetTitle) {
   })() : '';
   let imgHtml = '';
   if (r.image) {
-    const src = r.image.isUserUpload ? `/uploads/${r.image.fileName}` : `/images/${r.image.fileName}`;
+    const src = `/images/${r.image.fileName}`;
     imgHtml = `<div class="record-image-wrap" data-src="${src}" data-caption="${escapeHtml((dateTag ? sheetTitle + ' | ' : '') + r.time + ' | ' + r.content)}">
       <img src="${src}" alt="${escapeHtml(r.content)}" loading="lazy" />
     </div>`;
@@ -441,7 +490,7 @@ function renderTimeline(records, dateLabel) {
     for (const r of g.records) {
       globalIdx++;
       const src = r.image
-        ? (r.image.isUserUpload ? `/uploads/${r.image.fileName}` : `/images/${r.image.fileName}`)
+        ? (`/images/${r.image.fileName}`)
         : null;
       const caption = `${dateLabel} | ${r.time || '??'} | ${r.content}`;
       const userTag = r.isUserAdded ? '<span class="record-user-tag">新增</span>' : '';
@@ -515,7 +564,7 @@ function generateDaySummary(records, dateLabel) {
 function renderTableRow(r, idx) {
   let imgCell;
   if (r.image) {
-    const src = r.image.isUserUpload ? `/uploads/${r.image.fileName}` : `/images/${r.image.fileName}`;
+    const src = `/images/${r.image.fileName}`;
     imgCell = `<td class="col-image" data-src="${src}" data-caption="${escapeHtml(r.time + ' | ' + r.content)}"><img src="${src}" alt="" loading="lazy" /></td>`;
   } else {
     imgCell = `<td class="col-image no-img">无图</td>`;
@@ -531,19 +580,10 @@ function renderTableRow(r, idx) {
 }
 
 // ============ 删除记录 ============
+// Cloudflare Pages 无持久化存储：新增记录直接写飞书，删除需去飞书表格操作
 async function deleteRecord(id) {
   if (!id) return;
-  if (!confirm('确定要删除这条摸鱼记录吗？此操作不可撤销。')) return;
-  try {
-    const resp = await fetch(`/api/records/${id}`, { method: 'DELETE' });
-    const json = await resp.json();
-    if (!json.ok) throw new Error(json.msg || '删除失败');
-    showToast('摸鱼记录已删除', 'success');
-    await loadRecords();
-    await loadStats();
-  } catch (e) {
-    showToast('删除失败：' + e.message, 'error');
-  }
+  showToast('网页端暂不支持删除，请到飞书表格里手动删除该行', 'info', 4000);
 }
 
 // ============ 灯箱 ============
@@ -676,9 +716,8 @@ function initAddForm() {
       uploadPlaceholder.style.display = 'block';
       uploadPreview.style.display = 'none';
 
-      // 重新加载数据
+      // 重新加载数据（loadRecords 内部会自动刷新统计）
       await loadRecords();
-      await loadStats();
 
       // 跳转到对应日期
       const idx = state.allData.findIndex(s => s.sheetTitle === sheetTitle);
@@ -772,7 +811,6 @@ document.addEventListener('DOMContentLoaded', () => {
   startRandomDanmaku();
 
   loadRecords();
-  loadStats();
   loadQuote();
 
   // 定时刷新语录
