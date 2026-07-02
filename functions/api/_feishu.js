@@ -19,20 +19,33 @@ function getSheetToken(env) {
 let tokenCache = null;
 let tokenExpire = 0;
 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
 async function getToken(env) {
   if (!isFeishuEnabled(env)) throw new Error('FEISHU not configured');
   const now = Date.now();
   if (tokenCache && now < tokenExpire - 60000) return tokenCache;
-  const resp = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ app_id: env.FEISHU_APP_ID, app_secret: env.FEISHU_APP_SECRET })
-  });
-  const data = await resp.json();
-  if (!data.tenant_access_token) throw new Error('Failed to get feishu token: ' + JSON.stringify(data));
-  tokenCache = data.tenant_access_token;
-  tokenExpire = now + (data.expire || 7200) * 1000;
-  return tokenCache;
+  // 重试 3 次：飞书 API 从 Cloudflare 海外边缘节点访问时偶发失败
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const resp = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ app_id: env.FEISHU_APP_ID, app_secret: env.FEISHU_APP_SECRET })
+      });
+      const data = await resp.json();
+      if (data.tenant_access_token) {
+        tokenCache = data.tenant_access_token;
+        tokenExpire = now + (data.expire || 7200) * 1000;
+        return tokenCache;
+      }
+      if (attempt < 3) { await sleep(400 * attempt); continue; }
+      throw new Error('Failed to get feishu token: ' + JSON.stringify(data));
+    } catch (e) {
+      if (attempt < 3) { await sleep(400 * attempt); continue; }
+      throw e;
+    }
+  }
 }
 
 async function getSheets(env) {
@@ -124,17 +137,27 @@ async function uploadImageToFeishu(env, fileBuffer, fileName) {
 
 async function downloadImage(env, fileToken) {
   if (!isFeishuEnabled(env)) return null;
-  try {
-    const token = await getToken(env);
-    const resp = await fetch(
-      `https://open.feishu.cn/open-apis/drive/v1/medias/${fileToken}/download`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!resp.ok) return null;
-    return await resp.arrayBuffer();
-  } catch (e) {
-    return null;
+  // 重试 3 次，应对飞书 API 从海外边缘节点访问的间歇性失败
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const token = await getToken(env);
+      const resp = await fetch(
+        `https://open.feishu.cn/open-apis/drive/v1/medias/${fileToken}/download`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (resp.ok) return await resp.arrayBuffer();
+      // 404 = fileToken 真失效，不重试
+      if (resp.status === 404) return null;
+      // 429/500/502/503 等间歇性错误，退避后重试
+      if (attempt < 3) { await sleep(400 * attempt); continue; }
+      return null;
+    } catch (e) {
+      // 网络错误，退避后重试
+      if (attempt < 3) { await sleep(400 * attempt); continue; }
+      return null;
+    }
   }
+  return null;
 }
 
 export {

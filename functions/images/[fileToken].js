@@ -7,6 +7,7 @@ import { isFeishuEnabled, downloadImage } from '../api/_feishu.js';
 export async function onRequestGet(context) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
+    // 图片内容稳定，用长缓存避免重复回源飞书
     'Cache-Control': 'public, max-age=86400, s-maxage=86400',
   };
 
@@ -21,16 +22,18 @@ export async function onRequestGet(context) {
     return new Response('Feishu not configured', { status: 503, headers });
   }
 
-  try {
-    const buf = await downloadImage(context.env, cleanToken);
-    if (!buf) {
-      return new Response('Image not found', { status: 404, headers });
-    }
-    return new Response(buf, {
-      status: 200,
-      headers: { ...headers, 'Content-Type': 'image/png' },
+  // downloadImage 内部已含 3 次重试逻辑
+  const buf = await downloadImage(context.env, cleanToken);
+  if (!buf) {
+    // 返回 502 而非 404：区分"真失效"和"飞书间歇性失败"，
+    // 让前端 handleImgError 知道该重试
+    return new Response('Image fetch failed (feishu API)', {
+      status: 502,
+      headers: { ...headers, 'Content-Type': 'text/plain' },
     });
-  } catch (e) {
-    return new Response('Download failed', { status: 500, headers });
   }
+  return new Response(buf, {
+    status: 200,
+    headers: { ...headers, 'Content-Type': 'image/png' },
+  });
 }

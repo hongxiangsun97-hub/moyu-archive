@@ -25,6 +25,37 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+// 图片加载失败处理：自动重试 2 次，仍失败显示占位
+// 原因：Cloudflare 海外边缘节点访问飞书 API 偶发失败，重试通常能成功
+function handleImgError(img) {
+  let n = parseInt(img.dataset.retry || '0', 10) + 1;
+  img.dataset.retry = n;
+  if (n <= 2) {
+    setTimeout(() => {
+      const base = img.src.split('?')[0];
+      img.src = base + '?r=' + Date.now();
+    }, 600 * n);
+  } else {
+    const wrap = img.closest('.record-image-wrap, .timeline-image, td.col-image');
+    if (wrap) {
+      wrap.style.cssText += ';display:flex;align-items:center;justify-content:center;min-height:100px;background:var(--bg-secondary,#f5f5f5);color:var(--text-muted,#999);font-size:13px;flex-direction:column;gap:6px;cursor:default;';
+      wrap.innerHTML = '<span style="font-size:28px;">📷</span><span>图片加载失败<br><small style="opacity:0.7">飞书服务器开小差了</small></span>';
+      wrap.removeAttribute('data-src');
+    } else {
+      img.style.display = 'none';
+    }
+  }
+}
+
+function bindImgErrorHandler(container) {
+  container.querySelectorAll('img').forEach(img => {
+    if (!img.dataset.errorBound) {
+      img.dataset.errorBound = '1';
+      img.addEventListener('error', () => handleImgError(img));
+    }
+  });
+}
+
 function showToast(message, type = 'info', duration = 3000) {
   const container = $('#toastContainer');
   const toast = document.createElement('div');
@@ -351,6 +382,7 @@ function renderCurrentSheet() {
     container.querySelectorAll('.record-delete-btn').forEach(b => {
       b.addEventListener('click', () => deleteRecord(b.dataset.id));
     });
+    bindImgErrorHandler(container);
     container.querySelectorAll('.search-group-header').forEach(h => {
       h.addEventListener('click', () => {
         // 点击日期标题跳转到该日期
@@ -422,6 +454,7 @@ function renderCurrentSheet() {
   container.querySelectorAll('.record-delete-btn').forEach(b => {
     b.addEventListener('click', () => deleteRecord(b.dataset.id));
   });
+  bindImgErrorHandler(container);
 }
 
 function renderCard(r, idx, sheetTitle) {
